@@ -1,0 +1,3 @@
+Black PWA + Server example included in /server. See server/README.md for instructions.
+
+To enable push, generate VAPID keys and set them as env vars when starting server.
