@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Home | Student Companion</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="../assets/css/black_theme.css">
+
+  <!-- PWA -->
+  <link rel="manifest" href="../assets/pwa/manifest.json">
+  <meta name="theme-color" content="#7b61ff">
+</head>
+<body>
+
+  <!-- Greeting -->
+  <div id="userGreet" class="user-greet" >Hi, Guest</div>
+
+
+  <div class="ai-layout">
+    <!-- 📁 Sidebar -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <h2>🧠 Black</h2>
+                <br><a href="homepage.html" class="active">Home</a><br>
+        <br><a href="notes.html">Notes</a><br>
+        <br><a href="timetable.html">Timetable</a><br>
+        <br><a href="gpa.html">GPA</a><br>
+        <br><a href="profile.html">Profile</a><br>
+        <br><a href="#" id="logoutBtn">Logout</a><br>
+      </div>
+      <ul id="chat-list" class="chat-list"></ul>
+    </aside>
+
+    <!-- 🧱 Main Chat Area -->
+    <div class="ai-container">
+      <header>
+        <button id="toggleSidebar" class="toggle-btn">☰</button>
+        <h1>Student Companion </h1>
+      </header>
+
+  <main class="container card" style="max-width:1200px; margin:40px auto; padding:24px; display:flex; flex-direction:column; gap:40px;">
+
+    <h1 id="welcomeMsg" style="text-align:center; font-size:2.2em;">Welcome 👋</h1>
+
+    <div class="intro-message" style="text-align:center; font-size:1.2em;">
+      <p>
+        🎓 <b>Student Companion</b> helps you stay organized with your
+        <span class="highlight">Notes</span>,
+        <span class="highlight">Timetable</span>, and
+        <span class="highlight">GPA tracker</span>.
+      </p>
+    </div>
+
+    <section class="dashboard-section" style="display:flex; justify-content:space-between; gap:20px;">
+      <div class="progress-item" style="flex:1;">
+        <h2>📝 Notes</h2>
+        <div class="progress-bar">
+          <div id="notesProgress" class="progress-fill"></div>
+          <span id="notesCountDisplay">0</span>
+        </div>
+      </div>
+
+      <div class="progress-item" style="flex:1;">
+        <h2>📅 Timetable</h2>
+        <div class="progress-bar">
+          <div id="classProgress" class="progress-fill"></div>
+          <span id="classCountDisplay">0</span>
+        </div>
+      </div>
+
+      <div class="progress-item" style="flex:1;">
+        <h2>🎓 GPA</h2>
+        <div class="progress-bar">
+          <div id="gpaProgress" class="progress-fill"></div>
+          <span id="gpaCountDisplay">0.0</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="notifications" style="text-align:center;">
+      <h2>🔔 Notifications</h2>
+      <ul id="homeNotifications" style="list-style:none; padding:0;"></ul>
+      <button onclick="requestNotificationPermission()" style="margin-top:16px;">Enable Notifications</button>
+    </section>
+
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const username = localStorage.getItem('currentUser') || 'Guest';
+      document.getElementById('userGreet').textContent = `Hi, ${username}`;document.getElementById('welcomeMsg').textContent = `Welcome, ${username} 👋`;
+      
+
+      if(!localStorage.getItem('notes')) localStorage.setItem('notes', JSON.stringify(['Note1','Note2']));
+      if(!localStorage.getItem('timetable')) localStorage.setItem('timetable', JSON.stringify(['Math','English']));
+      if(!localStorage.getItem('gpaRecords')) localStorage.setItem('gpaRecords', JSON.stringify([4.0,3.8,4.2]));
+      if(!localStorage.getItem('homeNotifications')) localStorage.setItem('homeNotifications', JSON.stringify(['Welcome to Student Companion!']));
+      localStorage.setItem('profile', JSON.stringify({ name: 'David' }));
+
+      const notesCount = JSON.parse(localStorage.getItem('notes')).length;
+      const classCount = JSON.parse(localStorage.getItem('timetable')).length;
+      const gpaRecords = JSON.parse(localStorage.getItem('gpaRecords'));
+      const gpaAverage = gpaRecords.length ? gpaRecords.reduce((a,b)=>a+b,0)/gpaRecords.length : 0;
+
+      const maxNotes = 50, maxClasses = 50, maxGPA = 5;
+
+      const animateBarWithNumber = (barId, numberId, currentValue, maxValue, decimal=false) => {
+        const bar = document.getElementById(barId);
+        const number = document.getElementById(numberId);
+        let width = 0, count = 0;
+        const targetWidth = (currentValue / maxValue) * 100;
+        const steps = 50;
+        const interval = setInterval(() => {
+          width += targetWidth / steps;
+          if (width >= targetWidth) {
+            width = targetWidth;
+            bar.style.width = width + '%';
+            number.textContent = decimal ? currentValue.toFixed(2) : Math.floor(currentValue);
+            clearInterval(interval);
+          } else {
+            bar.style.width = width + '%';
+            count += currentValue / steps;
+            number.textContent = decimal ? count.toFixed(2) : Math.floor(count);
+          }
+        }, 20);
+      };
+
+      animateBarWithNumber('notesProgress','notesCountDisplay', notesCount, maxNotes);
+      animateBarWithNumber('classProgress','classCountDisplay', classCount, maxClasses);
+      animateBarWithNumber('gpaProgress','gpaCountDisplay', gpaAverage, maxGPA, true);
+    
+      const notifications = JSON.parse(localStorage.getItem('homeNotifications') || '[]');
+      const list = document.getElementById('homeNotifications');
+      list.innerHTML = '';
+      notifications.forEach(n => {
+        const li = document.createElement('li');
+        li.textContent = n;
+        list.appendChild(li);
+      });
+
+      window.requestNotificationPermission = function() {
+        if(!("Notification" in window)) return alert("Browser does not support notifications.");
+        Notification.requestPermission().then(permission => {
+          if(permission === "granted") {
+            new Notification(`Hello, ${username}!`, { body: "Welcome back to Student Companion 🎓" });
+          }
+        });
+      };
+
+      document.getElementById('logoutBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        localStorage.removeItem('currentUser');
+        window.location.href = "index.html";
+      });
+    });
+  </script>
+   <script src="script.js"></script>
+    <a href="ai.html" class="floating-ai">🤖</a>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("../assets/pwa/sw.js")
+      .catch(e => console.warn("SW registration failed", e));
+    }
+
+      // ====== USER & LOGOUT ======
+  function getCurrentUser() { return localStorage.getItem("currentUser"); }
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) logoutBtn.addEventListener("click", () => {
+    if(confirm("Logout now?")){
+      localStorage.removeItem("currentUser");
+      window.location.href = "index.html";
+    }
+  });
+
+  </script>
+
+</body>
+</html>

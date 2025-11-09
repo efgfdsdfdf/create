@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logout | Student Companion</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="script.js" defer></script>
+
+  <link rel="stylesheet" href="../assets/css/black_theme.css">
+
+  <link rel="manifest" href="../assets/pwa/manifest.json">
+    <meta name="theme-color" content="#7b61ff">
+</head>
+<body onload="logout()" class="fade-in">
+  <div class="user-greet" style="position:fixed;left:16px;bottom:20px;z-index:99998;padding:8px 12px;border-radius:8px;background:rgba(0,0,0,0.35);backdrop-filter:blur(4px);">Hi, Guest</div>
+
+
+  <main class="container">
+    <div class="card">
+      <h1>👋 Logging you out...</h1>
+      <p>Please wait a moment. You will be redirected.</p>
+    </div>
+  </main>
+  <script src="script.js"></script>
+  <footer>
+    <p>© 2025 Student Companion | Team Black 🖤</p>
+  </footer>
+
+  <script src="../assets/js/blackbot.js" defer></script>
+
+  <script src="../assets/js/auth.js" defer></script>
+
+  <script>if("serviceWorker" in navigator){navigator.serviceWorker.register("../assets/pwa/sw.js").catch(e=>console.warn("sw reg failed",e));}</script>
+  <script src="../assets/js/push.js" defer></script>
+</body>
+</html>

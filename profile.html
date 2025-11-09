@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile | Student Companion</title>
+  <link rel="stylesheet" href="styles.css">
+
+  <link rel="stylesheet" href="../assets/css/profile.css">
+
+  <link rel="manifest" href="../assets/pwa/manifest.json">
+    <meta name="theme-color" content="#7b61ff">
+</head>
+<body>
+  <div class="user-greet" style="position:fixed;left:16px;bottom:20px;z-index:99998;padding:8px 12px;border-radius:8px;background:rgba(0,0,0,0.35);backdrop-filter:blur(4px);">Hi, Guest</div>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="brand">Student Companion </div>
+     <div class="nav-right">
+      <a href="homepage.html">Home</a>
+      <a href="notes.html">Notes</a>
+      <a href="timetable.html">Timetable</a>
+      <a href="gpa.html">GPA</a>
+      <a href="profile.html"class="active">Profile</a>
+    </div>
+  </nav>
+  <!-- Profile Section -->
+  <main class="profile-container fade-in">
+    <h1>👤 My Profile</h1>
+    <p class="subtitle">Manage your personal info and profile picture.</p>
+
+    <!-- Username Display -->
+    <h2 id="profileUsername"></h2>
+
+    <!-- Profile Picture -->
+    <img id="profilePic" src="default-profile.png" alt="Profile Picture" class="profile-pic">
+    <input type="file" id="uploadPic" accept="image/*" style="display:none;">
+    <button class="btn" id="uploadBtn">📸 Upload Picture</button>
+    <button class="btn delete-btn" id="resetPicBtn">♻️ Reset Picture</button>
+
+    <!-- Bio Section -->
+    <div class="bio-section">
+      <h3>📝 Bio</h3>
+      <p id="bioText" class="bio-text"></p>
+      <textarea id="bioInput" class="bio-input"></textarea>
+      <div style="margin-top:8px;">
+        <button class="btn" id="editBioBtn">✏️ Edit Bio</button>
+        <button class="btn" id="saveBioBtn">💾 Save Bio</button>
+      </div>
+    </div>
+  </main>
+
+
+
+  <script src="script.js"></script>
+  <script src="../assets/js/profile.js"></script>
+   <a href="ai.html" class="floating-ai">🤖</a>
+
+  <script>if("serviceWorker" in navigator){navigator.serviceWorker.register("../assets/pwa/sw.js").catch(e=>console.warn("sw reg failed",e));}</script>
+  <script src="../assets/js/push.js" defer></script>
+</body>
+</html>

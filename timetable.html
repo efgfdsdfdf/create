@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Timetable | Student Companion</title>
+
+  <link rel="stylesheet" href="styles.css">
+  
+  <meta name="theme-color" content="#7b61ff">
+
+  <script src="script.js" defer></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("../assets/pwa/sw.js")
+        .catch(e => console.warn("SW registration failed:", e));
+    }
+  </script>
+</head>
+<body>
+ 
+   
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="brand">Student Companion </div>
+     <div class="nav-right">
+      <a href="homepage.html">Home</a>
+      <a href="notes.html">Notes</a>
+      <a href="timetable.html"class="active">Timetable</a>
+      <a href="gpa.html">GPA</a>
+      <a href="profile.html">Profile</a>
+    </div>
+  </nav>
+
+  <!-- Timetable Section -->
+  <main class="container fade-in timetable-container">
+    <h1>📅 My Timetable</h1>
+    <p class="subtitle">Add, view, and manage your daily classes.</p>
+
+    <form id="timetableForm" class="timetable-form">
+      <input id="classCourse" type="text" placeholder="Course name (e.g. Physics 101)" required>
+      
+      <select id="classDay" required>
+        <option value="">Select Day</option>
+        <option value="Sunday">Sunday</option>
+        <option value="Monday">Monday</option>
+        <option value="Tuesday">Tuesday</option>
+        <option value="Wednesday">Wednesday</option>
+        <option value="Thursday">Thursday</option>
+        <option value="Friday">Friday</option>
+        <option value="Saturday">Saturday</option>
+      </select>
+
+      <input id="classTime" type="time" required>
+
+      <select id="notifyBefore">
+        <option value="5">Notify 5 minutes before</option>
+        <option value="10">Notify 10 minutes before</option>
+        <option value="20">Notify 20 minutes before</option>
+        <option value="30">Notify 30 minutes before</option>
+      </select>
+
+      <div class="form-buttons">
+        <button type="submit" id="addClassBtn" class="btn-primary">➕ Add Class</button>
+        <button type="button" id="cancelEditBtn" class="btn-secondary" style="display:none;">Cancel Edit</button>
+      </div>
+    </form>
+
+    <ul id="timetableList" class="timetable-list"></ul>
+  </main>
+   <a href="ai.html" class="floating-ai">🤖</a>
+
+  <script>
+      // ====== USER & LOGOUT ======
+  function getCurrentUser() { return localStorage.getItem("currentUser"); }
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) logoutBtn.addEventListener("click", () => {
+    if(confirm("Logout now?")){
+      localStorage.removeItem("currentUser");
+      window.location.href = "index.html";
+    }
+  });
+
+  const user = getCurrentUser();
+  if(!user) { alert("Please log in!"); window.location.href="index.html"; }
+  // Only set the greeting if a user is present to avoid showing a generic "Hi" or "Guest"
+  if (user) {
+    const userGreetEl = document.getElementById("userGreet");
+    if (userGreetEl) {
+      userGreetEl.textContent = `Hi, ${user}`;
+      userGreetEl.style.display = "block";
+    }
+  }
+
+  let users = JSON.parse(localStorage.getItem("users")) || {};
+  if(!users[user]) users[user] = { password:"", notes:[], timetable:[], gpa:[], profile:{}, notifications:[] };
+  localStorage.setItem("users", JSON.stringify(users));
+  users = JSON.parse(localStorage.getItem("users")); // reload
+  </script>
+
+</body>
+</html>

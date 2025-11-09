@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GPA | Student Companion</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="../assets/css/black_theme.css">
+<meta name="theme-color" content="#7b61ff">
+<style>
+  body { background:#111; color:#fff; font-family:Poppins,sans-serif; margin:0; padding:0;}
+  .navbar { display:flex; justify-content:space-between; padding:12px 24px; background:#222; }
+  .navbar a { color:#fff; text-decoration:none; margin-left:16px; }
+  .navbar a.active { color:#7b61ff; font-weight:600; }
+
+  main.container {
+    display:flex; flex-direction:column; align-items:center;
+    width:85%; max-width:900px; margin:50px auto; padding:40px;
+    background: rgba(255,255,255,0.05); border-radius:18px;
+    backdrop-filter: blur(8px); box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+  }
+  h1 { text-align:center; margin-bottom:20px; }
+  form#gpaForm { display:flex; flex-direction:column; gap:12px; width:100%; }
+  form#gpaForm input, form#gpaForm select {
+    width:100%; padding:12px; border-radius:10px; border:none;
+    background:#222; color:#fff; font-size:1rem;
+  }
+  .btn { padding:10px 18px; border-radius:8px; cursor:pointer; font-weight:600; }
+  #gpaList { list-style:none; padding:0; width:100%; margin-top:25px; }
+  #gpaList li { display:flex; justify-content:space-between; align-items:center;
+    padding:12px 14px; margin-bottom:12px; border-radius:10px; background:rgba(255,255,255,0.07);
+  }
+  .actions button { margin-left:6px; cursor:pointer; border:none; border-radius:6px; padding:5px 10px; }
+  .actions .edit-btn { background:#7b61ff;color:#fff; }
+  .actions .delete-btn { background:#e74c3c;color:#fff; }
+  #gpaResult { margin-top:30px; font-size:2rem; color:#7b61ff; font-weight:bold; }
+  footer { text-align:center; margin-top:40px; color:rgba(255,255,255,0.7); }
+</style>
+</head>
+<body>
+<div class="user-greet" id="userGreet"></div>
+
+  
+
+ <!-- Navbar -->
+  <nav class="navbar">
+    <div class="brand">Student Companion </div>
+     <div class="nav-right">
+      <a href="homepage.html">Home</a>
+      <a href="notes.html">Notes</a>
+      <a href="timetable.html">Timetable</a>
+      <a href="gpa.html"class="active">GPA</a>
+      <a href="profile.html">Profile</a>
+    </div>
+  </nav>
+
+<main class="container card">
+  <h1>📊 GPA Calculator</h1>
+  <form id="gpaForm">
+    <input id="courseName" type="text" placeholder="Course name" required>
+    <select id="courseGrade" required>
+      <option value="">Select Grade</option>
+      <option value="A">A (5)</option>
+      <option value="B">B (4)</option>
+      <option value="C">C (3)</option>
+      <option value="D">D (2)</option>
+      <option value="E">E (1)</option>
+      <option value="F">F (0)</option>
+    </select>
+    <input id="courseUnits" type="number" placeholder="Credit Units" min="0" max="3" required>
+    <div style="display:flex; gap:10px; justify-content:center;">
+      <button type="submit" class="btn" style="background:#7b61ff;color:white;">➕ Add Course</button>
+      <button type="button" class="btn" id="cancelCourseEditBtn" style="display:none;background:#555;color:white;">Cancel Edit</button>
+    </div>
+  </form>
+
+  <ul id="gpaList"></ul>
+  <h2>🎯 GPA: <span id="gpaResult">0.00</span></h2>
+</main>
+
+
+<script>
+  // ====== USER & LOGOUT ======
+  function getCurrentUser() { return localStorage.getItem("currentUser"); }
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) logoutBtn.addEventListener("click", () => {
+    if(confirm("Logout now?")){
+      localStorage.removeItem("currentUser");
+      window.location.href = "index.html";
+    }
+  });
+
+  const user = getCurrentUser();
+  if(!user) { alert("Please log in!"); window.location.href="index.html"; }
+  // Only set the greeting if a user is present to avoid showing a generic "Hi" or "Guest"
+  if (user) {
+    const userGreetEl = document.getElementById("userGreet");
+    if (userGreetEl) {
+      userGreetEl.textContent = `Hi, ${user}`;
+      userGreetEl.style.display = "block";
+    }
+  }
+
+  let users = JSON.parse(localStorage.getItem("users")) || {};
+  if(!users[user]) users[user] = { password:"", notes:[], timetable:[], gpa:[], profile:{}, notifications:[] };
+  localStorage.setItem("users", JSON.stringify(users));
+  users = JSON.parse(localStorage.getItem("users")); // reload
+
+  // ====== GPA ======
+  const gpaForm = document.getElementById("gpaForm");
+  const courseName = document.getElementById("courseName");
+  const courseGrade = document.getElementById("courseGrade");
+  const courseUnits = document.getElementById("courseUnits");
+  const gpaList = document.getElementById("gpaList");
+  const gpaResult = document.getElementById("gpaResult");
+  const cancelBtn = document.getElementById("cancelCourseEditBtn");
+
+  const gradePoints = {A:5,B:4,C:3,D:2,E:1,F:0};
+  let courses = users[user].gpa || [];
+  let editIndex = null;
+
+  function saveCourses() { users[user].gpa = courses; localStorage.setItem("users", JSON.stringify(users)); }
+  function calculateGPA() {
+    let totalUnits=0, totalPoints=0;
+    courses.forEach(c => { totalUnits+=c.units; totalPoints+=gradePoints[c.grade]*c.units; });
+    gpaResult.textContent = totalUnits>0?(totalPoints/totalUnits).toFixed(2):"0.00";
+  }
+  function displayCourses(){
+    gpaList.innerHTML="";
+    if(courses.length===0){ gpaList.innerHTML='<li style="color:gray;text-align:center;">No courses added yet.</li>'; gpaResult.textContent="0.00"; return; }
+    courses.forEach((c,i)=>{
+      const li=document.createElement("li");
+      li.innerHTML=`<span>${c.name} - <b>${c.grade}</b> (${c.units} units)</span>
+        <div class="actions">
+          <button class="edit-btn" onclick="editCourse(${i})">✏️</button>
+          <button class="delete-btn" onclick="deleteCourse(${i})">🗑️</button>
+        </div>`;
+      gpaList.appendChild(li);
+    });
+    calculateGPA();
+  }
+
+  gpaForm.addEventListener("submit", e=>{
+    e.preventDefault();
+    const name=courseName.value.trim();
+    const grade=courseGrade.value;
+    const units=parseInt(courseUnits.value);
+    if(!name||!grade||isNaN(units)){ alert("Please fill all fields correctly!"); return; }
+    const newCourse={name,grade,units};
+    if(editIndex!==null){ courses[editIndex]=newCourse; editIndex=null; cancelBtn.style.display="none"; }
+    else{ courses.push(newCourse); }
+    saveCourses(); displayCourses(); gpaForm.reset();
+  });
+
+  function editCourse(i){ const c=courses[i]; courseName.value=c.name; courseGrade.value=c.grade; courseUnits.value=c.units; editIndex=i; cancelBtn.style.display="inline-block"; }
+  cancelBtn.addEventListener("click",()=>{ editIndex=null; cancelBtn.style.display="none"; gpaForm.reset(); });
+  function deleteCourse(i){ if(confirm("Delete this course?")){ courses.splice(i,1); saveCourses(); displayCourses(); } }
+
+  window.onload=displayCourses;
+</script>
+<script src="script.js"></script>
+ <a href="ai.html" class="floating-ai">🤖</a>
+</body>
+</html>

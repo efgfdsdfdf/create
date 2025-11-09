@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up | Student Companion</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="../assets/pwa/manifest.json">
+  <meta name="theme-color" content="#7b61ff">
+</head>
+<body>
+  <!-- Greeting -->
+  <div class="user-greet">Hi, Guest</div>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-left">📘 Student Companion</div>
+    <div class="nav-right">
+    </div>
+  </nav>
+
+  <!-- Signup Section -->
+  <main class="signup-container fade-in">
+    <h1>Create Account ✨</h1>
+    <p class="subtitle">Sign up to start your personal student companion journey.</p>
+
+    <div class="signup-card">
+      <input type="text" id="signupUser" placeholder="Choose Username">
+      <input type="password" id="signupPass" placeholder="Choose Password">
+      <button onclick="signup(document.getElementById('signupUser').value, document.getElementById('signupPass').value)">Sign Up</button>
+
+      <p class="signup-text">
+        Already have an account?
+        <a href="index.html">Login</a>
+      </p>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <p>© 2025 Student Companion | Team Black 🖤</p>
+    <p>Powered by Ezeilo</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
