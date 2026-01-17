@@ -4,100 +4,1529 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Timetable | Student Companion</title>
-
-  <link rel="stylesheet" href="styles.css">
-  
-  <meta name="theme-color" content="#7b61ff">
-
-  <script src="script.js" defer></script>
-  <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("../assets/pwa/sw.js")
-        .catch(e => console.warn("SW registration failed:", e));
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* ===== CSS VARIABLES ===== */
+    :root {
+      --mature-accent: #7b61ff;
+      --mature-accent-2: #6248e6;
+      --mature-bg: linear-gradient(180deg,#06060a,#0b0b10);
+      --mature-surface: rgba(255,255,255,0.03);
+      --mature-card: #0f1114;
+      --muted-text: #c7cbd6;
+      --muted-weak: #98a0b3;
+      --border-soft: rgba(255,255,255,0.04);
+      --success: #00ff9d;
+      --info: #00b8ff;
+      --warning: #ffb800;
+      --danger: #ff6b6b;
+      --transition: all 0.3s ease;
+      --shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      --radius-lg: 24px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
     }
-  </script>
+
+    /* ===== GLOBAL RESET & BASE STYLES ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      background: var(--mature-bg) !important;
+      color: var(--muted-text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      line-height: 1.6;
+      transition: background 0.3s ease, color 0.3s ease;
+      padding-bottom: 80px;
+    }
+
+    /* ===== LIGHT THEME ===== */
+    body.theme-light {
+      --mature-bg: linear-gradient(180deg, #f5f5f7, #ffffff);
+      --mature-surface: rgba(0, 0, 0, 0.03);
+      --mature-card: #ffffff;
+      --muted-text: #2d3748;
+      --muted-weak: #4a5568;
+      --border-soft: rgba(0, 0, 0, 0.1);
+      background: var(--mature-bg) !important;
+      color: var(--muted-text);
+    }
+
+    body.theme-light .navbar {
+      background: rgba(255, 255, 255, 0.95);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    body.theme-light .timetable-container {
+      background: var(--mature-card);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    }
+
+    body.theme-light .timetable-form,
+    body.theme-light .timetable-item {
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid var(--border-soft);
+    }
+
+    body.theme-light input,
+    body.theme-light select {
+      background: rgba(0, 0, 0, 0.02);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      color: var(--muted-text);
+    }
+
+    /* ===== REDUCED MOTION ===== */
+    body.reduce-motion * {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideInRight {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+
+    /* ===== NAVBAR ===== */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      background: rgba(15, 17, 20, 0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-soft);
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 1000;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      height: 70px;
+    }
+
+    .navbar .brand {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--mature-accent);
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      text-decoration: none;
+    }
+
+    .brand-icon {
+      font-size: 1.8rem;
+      filter: drop-shadow(0 0 5px rgba(123, 97, 255, 0.5));
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .logout-btn {
+      background: transparent;
+      border: 1px solid rgba(255, 107, 107, 0.3);
+      color: var(--danger);
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+    }
+
+    .logout-btn:hover {
+      background: rgba(255, 107, 107, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--muted-text);
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      transition: var(--transition);
+      background: rgba(123, 97, 255, 0.1);
+      border: 1px solid rgba(123, 97, 255, 0.2);
+    }
+
+    .back-btn:hover {
+      background: rgba(123, 97, 255, 0.2);
+      transform: translateX(-3px);
+    }
+
+    /* ===== MAIN CONTENT ===== */
+    .container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+      margin-top: 70px;
+      width: 100%;
+      max-width: 1200px;
+      margin-left: auto;
+      margin-right: auto;
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    .timetable-container {
+      background: var(--mature-card);
+      backdrop-filter: blur(15px);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border-soft);
+      width: 100%;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, var(--mature-accent), var(--success));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .subtitle {
+      color: var(--muted-weak);
+      font-size: 1.1rem;
+      text-align: center;
+      margin-bottom: 2.5rem;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* ===== TIMETABLE FORM ===== */
+    .timetable-form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+      padding: 2rem;
+      background: linear-gradient(135deg, rgba(123, 97, 255, 0.05), rgba(98, 72, 230, 0.02));
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-soft);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .timetable-form::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--mature-accent), var(--success));
+    }
+
+    .form-header {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .form-header i {
+      font-size: 1.5rem;
+      color: var(--mature-accent);
+      background: rgba(123, 97, 255, 0.1);
+      padding: 12px;
+      border-radius: 12px;
+    }
+
+    .form-header h3 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: var(--muted-text);
+    }
+
+    input, select {
+      width: 100%;
+      padding: 1rem 1.2rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1.5px solid var(--border-soft);
+      border-radius: var(--radius-sm);
+      color: var(--muted-text);
+      font-size: 1rem;
+      transition: var(--transition);
+      font-family: 'Inter', sans-serif;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--mature-accent);
+      box-shadow: 0 0 0 3px rgba(123, 97, 255, 0.15);
+      background: rgba(123, 97, 255, 0.05);
+    }
+
+    input::placeholder {
+      color: var(--muted-weak);
+    }
+
+    /* ===== BUTTONS ===== */
+    .btn-primary, .btn-secondary {
+      padding: 1rem 1.8rem;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      justify-content: center;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--mature-accent), var(--mature-accent-2));
+      color: white;
+      box-shadow: 0 5px 20px rgba(123, 97, 255, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .btn-primary:hover::before {
+      left: 100%;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(123, 97, 255, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--muted-text);
+      border: 1px solid var(--border-soft);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.12);
+      transform: translateY(-3px);
+      border-color: var(--mature-accent);
+    }
+
+    .form-buttons {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 1rem;
+    }
+
+    /* ===== TIMETABLE LIST ===== */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    .section-header h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: var(--muted-text);
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .classes-count {
+      background: rgba(123, 97, 255, 0.1);
+      color: var(--mature-accent);
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .timetable-list {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .timetable-item {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+      border-radius: var(--radius-md);
+      padding: 1.8rem;
+      border: 1px solid var(--border-soft);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    .timetable-item:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 15px 40px rgba(123, 97, 255, 0.15);
+      border-color: var(--mature-accent);
+    }
+
+    .timetable-item::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--mature-accent), var(--success));
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+    }
+
+    .timetable-item:hover::before {
+      transform: translateX(0);
+    }
+
+    .class-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.2rem;
+    }
+
+    .class-name {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--muted-text);
+      margin-bottom: 0.5rem;
+      line-height: 1.3;
+    }
+
+    .class-day {
+      background: linear-gradient(135deg, var(--mature-accent), var(--mature-accent-2));
+      color: white;
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(123, 97, 255, 0.3);
+    }
+
+    .class-details {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .detail-item {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      color: var(--muted-weak);
+    }
+
+    .detail-item i {
+      width: 20px;
+      color: var(--mature-accent);
+    }
+
+    .class-actions {
+      display: flex;
+      gap: 0.8rem;
+      justify-content: flex-end;
+    }
+
+    .edit-btn, .delete-btn {
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 500;
+    }
+
+    .edit-btn {
+      background: rgba(0, 255, 157, 0.1);
+      color: var(--success);
+      border: 1px solid rgba(0, 255, 157, 0.2);
+    }
+
+    .edit-btn:hover {
+      background: rgba(0, 255, 157, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .delete-btn {
+      background: rgba(255, 107, 107, 0.1);
+      color: var(--danger);
+      border: 1px solid rgba(255, 107, 107, 0.2);
+    }
+
+    .delete-btn:hover {
+      background: rgba(255, 107, 107, 0.2);
+      transform: translateY(-2px);
+    }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--muted-weak);
+      grid-column: 1 / -1;
+    }
+
+    .empty-icon {
+      font-size: 4rem;
+      margin-bottom: 1.5rem;
+      opacity: 0.5;
+      color: var(--mature-accent);
+    }
+
+    .empty-state h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.8rem;
+      color: var(--muted-text);
+    }
+
+    .empty-state p {
+      font-size: 1rem;
+      max-width: 400px;
+      margin: 0 auto 2rem;
+      line-height: 1.6;
+    }
+
+    /* ===== BOTTOM NAVIGATION ===== */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(15, 17, 20, 0.95);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border-soft);
+      display: flex;
+      justify-content: space-around;
+      padding: 12px 0;
+      z-index: 1000;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-decoration: none;
+      color: var(--muted-weak);
+      font-size: 0.75rem;
+      transition: all 0.3s ease;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      min-width: 70px;
+      cursor: pointer;
+    }
+
+    .nav-item i {
+      font-size: 1.2rem;
+      margin-bottom: 4px;
+      transition: all 0.3s ease;
+    }
+
+    .nav-item.active {
+      color: var(--mature-accent);
+      background: rgba(123, 97, 255, 0.1);
+    }
+
+    .nav-item.active i {
+      transform: translateY(-2px);
+    }
+
+    .nav-item:hover {
+      color: var(--mature-accent);
+      transform: translateY(-2px);
+    }
+
+    /* ===== FLOATING AI BUTTON ===== */
+    .floating-ai {
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      background: linear-gradient(135deg, var(--mature-accent), var(--mature-accent-2));
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      text-decoration: none;
+      box-shadow: 0 8px 25px rgba(123, 97, 255, 0.4);
+      transition: all 0.3s ease;
+      z-index: 999;
+    }
+
+    .floating-ai:hover {
+      transform: scale(1.1) rotate(10deg);
+      box-shadow: 0 12px 30px rgba(123, 97, 255, 0.6);
+      animation: pulse 2s infinite;
+    }
+
+    .floating-ai i {
+      font-size: 1.5rem;
+    }
+
+    /* ===== NOTIFICATION SYSTEM ===== */
+    .notification-container {
+      position: fixed;
+      top: 90px;
+      right: 20px;
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .notification {
+      background: var(--mature-card);
+      border-left: 4px solid var(--mature-accent);
+      padding: 16px 20px;
+      border-radius: var(--radius-sm);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      transform: translateX(400px);
+      transition: transform 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 300px;
+      max-width: 400px;
+      backdrop-filter: blur(10px);
+    }
+
+    .notification.show {
+      transform: translateX(0);
+    }
+
+    .notification.success {
+      border-left-color: var(--success);
+    }
+
+    .notification.error {
+      border-left-color: var(--danger);
+    }
+
+    .notification.warning {
+      border-left-color: var(--warning);
+    }
+
+    .notification.info {
+      border-left-color: var(--info);
+    }
+
+    .notification-icon {
+      font-size: 1.2rem;
+    }
+
+    .notification-content {
+      flex: 1;
+    }
+
+    .notification-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: var(--muted-text);
+    }
+
+    .notification-message {
+      font-size: 0.9rem;
+      color: var(--muted-weak);
+    }
+
+    .notification-close {
+      background: none;
+      border: none;
+      color: var(--muted-weak);
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 4px;
+      border-radius: 50%;
+      transition: var(--transition);
+    }
+
+    .notification-close:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--muted-text);
+    }
+
+    /* ===== RESPONSIVE DESIGN ===== */
+    @media (max-width: 768px) {
+      .navbar {
+        padding: 1rem;
+      }
+      
+      .container {
+        padding: 1rem;
+        margin-top: 60px;
+      }
+      
+      .timetable-container {
+        padding: 1.5rem;
+        border-radius: 20px;
+      }
+      
+      h1 {
+        font-size: 2rem;
+      }
+      
+      .timetable-form {
+        grid-template-columns: 1fr;
+        padding: 1.5rem;
+        gap: 1rem;
+      }
+      
+      .timetable-list {
+        grid-template-columns: 1fr;
+      }
+      
+      .form-buttons {
+        flex-direction: column;
+      }
+      
+      .nav-item {
+        min-width: 60px;
+        padding: 8px 12px;
+        font-size: 0.7rem;
+      }
+      
+      .nav-item i {
+        font-size: 1rem;
+      }
+      
+      .notification-container {
+        top: 80px;
+        right: 10px;
+        left: 10px;
+      }
+      
+      .notification {
+        min-width: auto;
+        max-width: 100%;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .navbar .brand {
+        font-size: 1.3rem;
+      }
+      
+      h1 {
+        font-size: 1.8rem;
+      }
+      
+      .subtitle {
+        font-size: 1rem;
+      }
+      
+      .btn-primary, .btn-secondary {
+        padding: 0.9rem 1.5rem;
+        font-size: 0.95rem;
+      }
+      
+      .timetable-item {
+        padding: 1.5rem;
+      }
+      
+      .class-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.8rem;
+      }
+      
+      .class-actions {
+        width: 100%;
+        justify-content: space-between;
+      }
+    }
+
+    /* ===== DAY BADGE COLORS ===== */
+    .day-monday { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .day-tuesday { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .day-wednesday { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .day-thursday { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+    .day-friday { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+    .day-saturday { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333; }
+    .day-sunday { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); color: #333; }
+
+    /* ===== LOADING STATES ===== */
+    .loading {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .loading::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      animation: shimmer 1.5s infinite;
+    }
+  </style>
+  <meta name="theme-color" content="#7b61ff">
 </head>
 <body>
- 
-   
-
   <!-- Navbar -->
   <nav class="navbar">
-    <div class="brand">Student Companion </div>
-     <div class="nav-right">
-      <a href="homepage.html">Home</a>
-      <a href="notes.html">Notes</a>
-      <a href="timetable.html"class="active">Timetable</a>
-      <a href="gpa.html">GPA</a>
-      <a href="profile.html">Profile</a>
+    <a href="homepage.html" class="brand">
+      <i class="fas fa-graduation-cap brand-icon"></i>
+      Student Companion
+    </a>
+    <div class="nav-right">
+      <a href="homepage.html" class="back-btn">
+        <i class="fas fa-arrow-left"></i>
+        Back to Home
+      </a>
+      <button class="logout-btn" id="logoutBtn">
+        <i class="fas fa-sign-out-alt"></i>
+        Logout
+      </button>
     </div>
   </nav>
 
-  <!-- Timetable Section -->
-  <main class="container fade-in timetable-container">
-    <h1>📅 My Timetable</h1>
-    <p class="subtitle">Add, view, and manage your daily classes.</p>
+  <!-- Main Content -->
+  <main class="container">
+    <div class="timetable-container">
+      <h1>📅 Timetable Manager</h1>
+      <p class="subtitle">Organize your classes, set reminders, and never miss an important lecture. Your schedule, simplified.</p>
 
-    <form id="timetableForm" class="timetable-form">
-      <input id="classCourse" type="text" placeholder="Course name (e.g. Physics 101)" required>
+      <!-- Timetable Form -->
+      <form id="timetableForm" class="timetable-form">
+        <div class="form-header">
+          <i class="fas fa-plus-circle"></i>
+          <h3>Add New Class</h3>
+        </div>
+        
+        <input id="classCourse" type="text" placeholder="Course Name (e.g. Advanced Calculus)" required>
+        <input id="classLocation" type="text" placeholder="Location (e.g. Room 301, Building A)">
+        
+        <select id="classDay" required>
+          <option value="">Select Day</option>
+          <option value="Monday">Monday</option>
+          <option value="Tuesday">Tuesday</option>
+          <option value="Wednesday">Wednesday</option>
+          <option value="Thursday">Thursday</option>
+          <option value="Friday">Friday</option>
+          <option value="Saturday">Saturday</option>
+          <option value="Sunday">Sunday</option>
+        </select>
+
+        <input id="classTime" type="time" required>
+        <input id="classDuration" type="number" min="30" max="240" step="30" placeholder="Duration (minutes)" value="60">
+
+        <select id="notifyBefore">
+          <option value="0">No reminder</option>
+          <option value="5">Notify 5 minutes before</option>
+          <option value="10" selected>Notify 10 minutes before</option>
+          <option value="15">Notify 15 minutes before</option>
+          <option value="30">Notify 30 minutes before</option>
+          <option value="60">Notify 1 hour before</option>
+        </select>
+    
+        <div class="form-buttons">
+          <button type="submit" id="addClassBtn" class="btn-primary">
+            <i class="fas fa-plus"></i> Add Class
+          </button>
+          <button type="button" id="cancelEditBtn" class="btn-secondary" style="display:none;">
+            <i class="fas fa-times"></i> Cancel Edit
+          </button>
+        </div>
+      </form>
       
-      <select id="classDay" required>
-        <option value="">Select Day</option>
-        <option value="Sunday">Sunday</option>
-        <option value="Monday">Monday</option>
-        <option value="Tuesday">Tuesday</option>
-        <option value="Wednesday">Wednesday</option>
-        <option value="Thursday">Thursday</option>
-        <option value="Friday">Friday</option>
-        <option value="Saturday">Saturday</option>
-      </select>
-
-      <input id="classTime" type="time" required>
-
-      <select id="notifyBefore">
-        <option value="5">Notify 5 minutes before</option>
-        <option value="10">Notify 10 minutes before</option>
-        <option value="20">Notify 20 minutes before</option>
-        <option value="30">Notify 30 minutes before</option>
-      </select>
-
-      <div class="form-buttons">
-        <button type="submit" id="addClassBtn" class="btn-primary">➕ Add Class</button>
-        <button type="button" id="cancelEditBtn" class="btn-secondary" style="display:none;">Cancel Edit</button>
+      <!-- Timetable List -->
+      <div class="section-header">
+        <h2><i class="fas fa-calendar-alt"></i> Your Schedule</h2>
+        <div class="classes-count" id="classesCount">0 classes</div>
       </div>
-    </form>
-
-    <ul id="timetableList" class="timetable-list"></ul>
+      
+      <ul id="timetableList" class="timetable-list">
+        <!-- Classes will be dynamically added here -->
+      </ul>
+    </div>
   </main>
-   <a href="ai.html" class="floating-ai">🤖</a>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <a href="homepage.html" class="nav-item">
+      <i class="fas fa-home"></i>
+      Home
+    </a>
+    <a href="timetable.html" class="nav-item active">
+      <i class="fas fa-calendar-alt"></i>
+      Timetable
+    </a>
+    <a href="notes.html" class="nav-item">
+      <i class="fas fa-sticky-note"></i>
+      Notes
+    </a>
+    <a href="gpa.html" class="nav-item">
+      <i class="fas fa-chart-line"></i>
+      GPA
+    </a>
+    <a href="profile.html" class="nav-item">
+      <i class="fas fa-user"></i>
+      Profile
+    </a>
+  </nav>
+
+  <!-- Floating AI Button -->
+  <a href="ai2.html" class="floating-ai">
+    <i class="fas fa-robot"></i>
+  </a>
+
+  <!-- Notification Container -->
+  <div id="notificationContainer" class="notification-container"></div>
 
   <script>
-      // ====== USER & LOGOUT ======
-  function getCurrentUser() { return localStorage.getItem("currentUser"); }
-  const logoutBtn = document.getElementById("logoutBtn");
-  if (logoutBtn) logoutBtn.addEventListener("click", () => {
-    if(confirm("Logout now?")){
-      localStorage.removeItem("currentUser");
-      window.location.href = "index.html";
-    }
-  });
+    // ====== SETTINGS MANAGEMENT ======
+    const SettingsManager = {
+      defaults: {
+        theme: 'dark',
+        language: 'en',
+        accentColor: '#7b61ff',
+        enableNotifications: true,
+        classReminders: true,
+        reminderSound: true,
+        animations: true,
+        reduceMotion: false
+      },
 
-  const user = getCurrentUser();
-  if(!user) { alert("Please log in!"); window.location.href="index.html"; }
-  // Only set the greeting if a user is present to avoid showing a generic "Hi" or "Guest"
-  if (user) {
-    const userGreetEl = document.getElementById("userGreet");
-    if (userGreetEl) {
-      userGreetEl.textContent = `Hi, ${user}`;
-      userGreetEl.style.display = "block";
-    }
-  }
+      current: {},
 
-  let users = JSON.parse(localStorage.getItem("users")) || {};
-  if(!users[user]) users[user] = { password:"", notes:[], timetable:[], gpa:[], profile:{}, notifications:[] };
-  localStorage.setItem("users", JSON.stringify(users));
-  users = JSON.parse(localStorage.getItem("users")); // reload
+      init: function() {
+        this.loadSettings();
+        this.applySettings();
+        this.initEventListeners();
+      },
+
+      loadSettings: function() {
+        const username = localStorage.getItem('currentUser') || 'guest';
+        const userSettings = JSON.parse(localStorage.getItem(`${username}_settings`)) || {};
+        this.current = { ...this.defaults, ...userSettings };
+        this.applySettings();
+      },
+
+      saveSettings: function() {
+        const username = localStorage.getItem('currentUser') || 'guest';
+        localStorage.setItem(`${username}_settings`, JSON.stringify(this.current));
+      },
+
+      applySettings: function() {
+        // Apply theme
+        document.body.classList.remove('theme-dark', 'theme-light', 'theme-auto');
+        if (this.current.theme === 'light') {
+          document.body.classList.add('theme-light');
+        } else if (this.current.theme === 'auto') {
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          document.body.classList.add(prefersDark ? 'theme-dark' : 'theme-light');
+        } else {
+          document.body.classList.add('theme-dark');
+        }
+
+        // Apply accent color
+        if (this.current.accentColor) {
+          document.documentElement.style.setProperty('--mature-accent', this.current.accentColor);
+          const hex = this.current.accentColor.replace('#', '');
+          const r = Math.max(0, parseInt(hex.substr(0, 2), 16) - 40);
+          const g = Math.max(0, parseInt(hex.substr(2, 2), 16) - 40);
+          const b = Math.max(0, parseInt(hex.substr(4, 2), 16) - 40);
+          const darker = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+          document.documentElement.style.setProperty('--mature-accent-2', darker);
+        }
+
+        // Apply animations
+        if (this.current.reduceMotion) {
+          document.body.classList.add('reduce-motion');
+        } else {
+          document.body.classList.remove('reduce-motion');
+        }
+      },
+
+      initEventListeners: function() {
+        // Logout button
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+          if (confirm('Are you sure you want to logout?')) {
+            this.logoutUser();
+          }
+        });
+      },
+
+      showNotification: function(message, type = 'info', title = '') {
+        // Check if notifications are enabled in settings
+        if (!this.current.enableNotifications && type !== 'error') {
+          return;
+        }
+
+        const container = document.getElementById('notificationContainer');
+        if (!container) return;
+
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        
+        const icons = {
+          success: 'fas fa-check-circle',
+          error: 'fas fa-exclamation-circle',
+          warning: 'fas fa-exclamation-triangle',
+          info: 'fas fa-info-circle'
+        };
+
+        notification.innerHTML = `
+          <i class="${icons[type] || icons.info} notification-icon"></i>
+          <div class="notification-content">
+            ${title ? `<div class="notification-title">${title}</div>` : ''}
+            <div class="notification-message">${message}</div>
+          </div>
+          <button class="notification-close">&times;</button>
+        `;
+
+        container.appendChild(notification);
+
+        // Play sound if enabled
+        if (this.current.reminderSound && type !== 'info') {
+          this.playNotificationSound();
+        }
+
+        // Show notification
+        setTimeout(() => {
+          notification.classList.add('show');
+        }, 10);
+
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+          notification.classList.remove('show');
+          setTimeout(() => {
+            if (notification.parentNode === container) {
+              container.removeChild(notification);
+            }
+          }, 300);
+        }, 5000);
+
+        // Close button
+        notification.querySelector('.notification-close').addEventListener('click', () => {
+          notification.classList.remove('show');
+          setTimeout(() => {
+            if (notification.parentNode === container) {
+              container.removeChild(notification);
+            }
+          }, 300);
+        });
+      },
+
+      playNotificationSound: function() {
+        try {
+          const audio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==');
+          audio.volume = 0.3;
+          audio.play().catch(() => {});
+        } catch (e) {
+          console.log('Audio playback failed:', e);
+        }
+      },
+
+      logoutUser: function() {
+        this.saveSettings();
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('loginUser');
+        
+        this.showNotification('Logged out successfully', 'success', 'Goodbye!');
+        
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 1500);
+      }
+    };
+
+    // ====== TIMETABLE MANAGEMENT ======
+    const TimetableManager = {
+      user: null,
+      users: {},
+      editingIndex: -1,
+      
+      init: function() {
+        this.getCurrentUser();
+        this.loadData();
+        this.bindEvents();
+        this.renderTimetable();
+        this.startReminderChecks();
+      },
+
+      getCurrentUser: function() {
+        this.user = localStorage.getItem('currentUser') || localStorage.getItem('loginUser');
+        if (!this.user) {
+          SettingsManager.showNotification('Please log in first!', 'error', 'Access Denied');
+          setTimeout(() => window.location.href = 'index.html', 2000);
+          return;
+        }
+        
+        // Initialize user data structure
+        this.users = JSON.parse(localStorage.getItem('users')) || {};
+        if (!this.users[this.user]) {
+          this.users[this.user] = {
+            password: '',
+            notes: [],
+            timetable: [],
+            gpa: [],
+            profile: {},
+            notifications: []
+          };
+          localStorage.setItem('users', JSON.stringify(this.users));
+        }
+      },
+
+      loadData: function() {
+        this.users = JSON.parse(localStorage.getItem('users')) || {};
+      },
+
+      saveData: function() {
+        localStorage.setItem('users', JSON.stringify(this.users));
+      },
+
+      bindEvents: function() {
+        const form = document.getElementById('timetableForm');
+        const cancelBtn = document.getElementById('cancelEditBtn');
+        
+        form.addEventListener('submit', (e) => this.handleSubmit(e));
+        cancelBtn.addEventListener('click', () => this.cancelEdit());
+        
+        // Auto-focus first input
+        document.getElementById('classCourse').focus();
+      },
+
+      handleSubmit: function(e) {
+        e.preventDefault();
+        
+        const course = document.getElementById('classCourse').value.trim();
+        const location = document.getElementById('classLocation').value.trim();
+        const day = document.getElementById('classDay').value;
+        const time = document.getElementById('classTime').value;
+        const duration = parseInt(document.getElementById('classDuration').value) || 60;
+        const notifyBefore = parseInt(document.getElementById('notifyBefore').value);
+        
+        if (!course || !day || !time) {
+          SettingsManager.showNotification('Please fill in all required fields', 'error', 'Missing Information');
+          return;
+        }
+
+        const classData = {
+          id: Date.now(),
+          course,
+          location: location || 'Not specified',
+          day,
+          time,
+          duration,
+          notifyBefore,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+
+        if (this.editingIndex === -1) {
+          // Add new class
+          this.users[this.user].timetable.push(classData);
+          this.saveData();
+          SettingsManager.showNotification(
+            `Added "${course}" to your timetable`,
+            'success',
+            'Class Added'
+          );
+        } else {
+          // Update existing class
+          classData.id = this.users[this.user].timetable[this.editingIndex].id;
+          this.users[this.user].timetable[this.editingIndex] = classData;
+          this.saveData();
+          SettingsManager.showNotification(
+            `Updated "${course}" in your timetable`,
+            'info',
+            'Class Updated'
+          );
+        }
+
+        this.resetForm();
+        this.renderTimetable();
+      },
+
+      editClass: function(index) {
+        const classItem = this.users[this.user].timetable[index];
+        
+        document.getElementById('classCourse').value = classItem.course;
+        document.getElementById('classLocation').value = classItem.location;
+        document.getElementById('classDay').value = classItem.day;
+        document.getElementById('classTime').value = classItem.time;
+        document.getElementById('classDuration').value = classItem.duration;
+        document.getElementById('notifyBefore').value = classItem.notifyBefore;
+        
+        this.editingIndex = index;
+        document.getElementById('cancelEditBtn').style.display = 'flex';
+        document.getElementById('addClassBtn').innerHTML = '<i class="fas fa-save"></i> Update Class';
+        
+        // Smooth scroll to form
+        document.getElementById('timetableForm').scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+        
+        document.getElementById('classCourse').focus();
+      },
+
+      deleteClass: function(index) {
+        const classItem = this.users[this.user].timetable[index];
+        
+        if (confirm(`Are you sure you want to delete "${classItem.course}"?`)) {
+          this.users[this.user].timetable.splice(index, 1);
+          this.saveData();
+          this.renderTimetable();
+          
+          SettingsManager.showNotification(
+            `Removed "${classItem.course}" from your timetable`,
+            'warning',
+            'Class Deleted'
+          );
+        }
+      },
+
+      cancelEdit: function() {
+        this.resetForm();
+        SettingsManager.showNotification('Edit cancelled', 'info');
+      },
+
+      resetForm: function() {
+        document.getElementById('timetableForm').reset();
+        document.getElementById('cancelEditBtn').style.display = 'none';
+        document.getElementById('addClassBtn').innerHTML = '<i class="fas fa-plus"></i> Add Class';
+        this.editingIndex = -1;
+        document.getElementById('classCourse').focus();
+      },
+
+      formatTime: function(timeString) {
+        const [hours, minutes] = timeString.split(':');
+        const hour = parseInt(hours);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const displayHour = hour % 12 || 12;
+        return `${displayHour}:${minutes} ${ampm}`;
+      },
+
+      getDayBadgeClass: function(day) {
+        const dayLower = day.toLowerCase();
+        return `class-day day-${dayLower}`;
+      },
+
+      getNextClass: function() {
+        const now = new Date();
+        const currentDay = now.toLocaleString('en-us', { weekday: 'long' });
+        const currentTime = now.getHours() * 60 + now.getMinutes();
+        
+        const allClasses = this.users[this.user].timetable;
+        let nextClass = null;
+        let minDiff = Infinity;
+        
+        allClasses.forEach(classItem => {
+          const [classHours, classMinutes] = classItem.time.split(':').map(Number);
+          const classStartTime = classHours * 60 + classMinutes;
+          const classEndTime = classStartTime + classItem.duration;
+          
+          // Calculate time difference
+          let timeDiff;
+          if (classItem.day === currentDay) {
+            if (classStartTime >= currentTime) {
+              timeDiff = classStartTime - currentTime;
+            } else if (currentTime < classEndTime) {
+              timeDiff = 0; // Class is in progress
+            } else {
+              return; // Class already ended today
+            }
+          } else {
+            return; // Not today
+          }
+          
+          if (timeDiff < minDiff) {
+            minDiff = timeDiff;
+            nextClass = { ...classItem, timeDiff };
+          }
+        });
+        
+        return nextClass;
+      },
+
+      renderTimetable: function() {
+        const container = document.getElementById('timetableList');
+        const classes = this.users[this.user].timetable;
+        
+        // Update count
+        document.getElementById('classesCount').textContent = `${classes.length} class${classes.length !== 1 ? 'es' : ''}`;
+        
+        if (classes.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="fas fa-calendar-plus empty-icon"></i>
+              <h3>Your timetable is empty</h3>
+              <p>Add your first class to get started. Stay organized and never miss a lecture!</p>
+            </div>
+          `;
+          return;
+        }
+
+        // Sort classes by day and time
+        const dayOrder = {
+          Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4,
+          Friday: 5, Saturday: 6, Sunday: 7
+        };
+        
+        const sortedClasses = [...classes].sort((a, b) => {
+          if (dayOrder[a.day] !== dayOrder[b.day]) {
+            return dayOrder[a.day] - dayOrder[b.day];
+          }
+          return a.time.localeCompare(b.time);
+        });
+
+        // Group by day
+        const groupedByDay = {};
+        sortedClasses.forEach(classItem => {
+          if (!groupedByDay[classItem.day]) {
+            groupedByDay[classItem.day] = [];
+          }
+          groupedByDay[classItem.day].push(classItem);
+        });
+
+        // Render
+        container.innerHTML = '';
+        
+        Object.keys(groupedByDay).forEach(day => {
+          // Add day header
+          const dayHeader = document.createElement('div');
+          dayHeader.className = 'day-header';
+          dayHeader.style.gridColumn = '1 / -1';
+          dayHeader.style.margin = '1.5rem 0 1rem';
+          dayHeader.style.paddingBottom = '0.5rem';
+          dayHeader.style.borderBottom = '1px solid var(--border-soft)';
+          dayHeader.style.color = 'var(--muted-text)';
+          dayHeader.style.fontSize = '1.2rem';
+          dayHeader.style.fontWeight = '600';
+          dayHeader.innerHTML = `<i class="fas fa-calendar-day"></i> ${day}`;
+          container.appendChild(dayHeader);
+          
+          // Add classes for this day
+          groupedByDay[day].forEach((classItem, index) => {
+            const li = document.createElement('li');
+            li.className = 'timetable-item';
+            
+            const endTime = this.calculateEndTime(classItem.time, classItem.duration);
+            const nextClass = this.getNextClass();
+            const isNextClass = nextClass && nextClass.id === classItem.id;
+            
+            li.innerHTML = `
+              <div class="class-header">
+                <div>
+                  <div class="class-name">${classItem.course}</div>
+                  ${isNextClass ? '<div class="next-badge" style="background: rgba(0,255,157,0.1); color: var(--success); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; display: inline-block; margin-top: 4px;">Next Class</div>' : ''}
+                </div>
+                <div class="${this.getDayBadgeClass(classItem.day)}">${classItem.day}</div>
+              </div>
+              <div class="class-details">
+                <div class="detail-item">
+                  <i class="fas fa-clock"></i>
+                  <span>${this.formatTime(classItem.time)} - ${this.formatTime(endTime)} (${classItem.duration} min)</span>
+                </div>
+                <div class="detail-item">
+                  <i class="fas fa-map-marker-alt"></i>
+                  <span>${classItem.location}</span>
+                </div>
+                ${classItem.notifyBefore > 0 ? `
+                <div class="detail-item">
+                  <i class="fas fa-bell"></i>
+                  <span>Reminder: ${classItem.notifyBefore} minutes before</span>
+                </div>
+                ` : ''}
+              </div>
+              <div class="class-actions">
+                <button class="edit-btn" onclick="TimetableManager.editClass(${classes.indexOf(classItem)})">
+                  <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="delete-btn" onclick="TimetableManager.deleteClass(${classes.indexOf(classItem)})">
+                  <i class="fas fa-trash"></i> Delete
+                </button>
+              </div>
+            `;
+            
+            container.appendChild(li);
+          });
+        });
+      },
+
+      calculateEndTime: function(startTime, duration) {
+        const [hours, minutes] = startTime.split(':').map(Number);
+        const startDate = new Date();
+        startDate.setHours(hours, minutes, 0, 0);
+        
+        const endDate = new Date(startDate.getTime() + duration * 60000);
+        const endHours = endDate.getHours().toString().padStart(2, '0');
+        const endMinutes = endDate.getMinutes().toString().padStart(2, '0');
+        
+        return `${endHours}:${endMinutes}`;
+      },
+
+      startReminderChecks: function() {
+        // Check for reminders every minute
+        setInterval(() => this.checkReminders(), 60000);
+        
+        // Check immediately on load
+        setTimeout(() => this.checkReminders(), 2000);
+        
+        // Check every time page becomes visible
+        document.addEventListener('visibilitychange', () => {
+          if (!document.hidden) {
+            this.checkReminders();
+          }
+        });
+      },
+
+      checkReminders: function() {
+        // Check if class reminders are enabled in settings
+        if (!SettingsManager.current.classReminders) {
+          return;
+        }
+
+        const now = new Date();
+        const currentDay = now.toLocaleString('en-us', { weekday: 'long' });
+        const currentTime = now.getHours() * 60 + now.getMinutes();
+        
+        this.users[this.user].timetable.forEach(classItem => {
+          // Skip if not today
+          if (classItem.day !== currentDay) return;
+          
+          // Skip if no reminder set
+          if (classItem.notifyBefore <= 0) return;
+          
+          const [classHours, classMinutes] = classItem.time.split(':').map(Number);
+          const classStartTime = classHours * 60 + classMinutes;
+          const reminderTime = classStartTime - classItem.notifyBefore;
+          
+          // Check if it's exactly reminder time (within 1 minute tolerance)
+          if (Math.abs(currentTime - reminderTime) <= 1) {
+            const timeStr = this.formatTime(classItem.time);
+            SettingsManager.showNotification(
+              `"${classItem.course}" starts in ${classItem.notifyBefore} minutes at ${timeStr}`,
+              'info',
+              'Class Reminder ⏰'
+            );
+          }
+          
+          // Check if class is starting now
+          if (Math.abs(currentTime - classStartTime) <= 1) {
+            SettingsManager.showNotification(
+              `"${classItem.course}" is starting now!`,
+              'warning',
+              'Class Starting Now 🚨'
+            );
+          }
+        });
+      }
+    };
+
+    // ====== INITIALIZE EVERYTHING ======
+    document.addEventListener('DOMContentLoaded', () => {
+      // Initialize Settings Manager
+      SettingsManager.init();
+      
+      // Initialize Timetable Manager
+      TimetableManager.init();
+      
+      // Apply theme to bottom nav
+      const updateBottomNavTheme = () => {
+        const bottomNav = document.querySelector('.bottom-nav');
+        if (SettingsManager.current.theme === 'light') {
+          bottomNav.style.background = 'rgba(255, 255, 255, 0.95)';
+          bottomNav.style.borderTop = '1px solid rgba(0, 0, 0, 0.1)';
+        } else {
+          bottomNav.style.background = 'rgba(15, 17, 20, 0.95)';
+          bottomNav.style.borderTop = '1px solid rgba(255, 255, 255, 0.04)';
+        }
+      };
+      
+      // Update on theme change
+      const observer = new MutationObserver(updateBottomNavTheme);
+      observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+      
+      updateBottomNavTheme();
+      
+      // Update homepage stats when classes are modified
+      const updateHomepageStats = () => {
+        const classCount = TimetableManager.users[TimetableManager.user]?.timetable?.length || 0;
+        localStorage.setItem('timetableCount', classCount.toString());
+      };
+      
+      // Save timetable count
+      updateHomepageStats();
+      
+      // Expose managers to global scope for button onclick handlers
+      window.TimetableManager = TimetableManager;
+      window.SettingsManager = SettingsManager;
+    });
   </script>
-
 </body>
 </html>
